@@ -28,6 +28,11 @@
     font-family: var(--body);
     padding-inline: 16px;
     overflow: hidden;
+    /* a long press on a phone must not start a text selection or the callout menu */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
   }
   .app {
     height: 100%;
@@ -147,6 +152,15 @@
   .ov button:active { transform: translateY(0.6cqh); box-shadow: 0 0.2cqh 0 var(--plum); }
   .ov button.ghost { background: transparent; color: var(--ink); border-color: var(--muted); box-shadow: none; }
   .pick { display: flex; gap: 3cqw; justify-content: center; }
+  .mode { display: flex; gap: 1.5cqw; justify-content: center; }
+  .ov .mode button {
+    font-size: max(11px, 3.4cqh);
+    padding: 0.9cqh 3cqw;
+    background: transparent; color: var(--ink);
+    border-color: var(--muted); box-shadow: none;
+  }
+  .ov .mode button:active { transform: none; box-shadow: none; }
+  .ov .mode button[aria-pressed="true"] { background: var(--honey); color: var(--plum); border-color: var(--plum); }
   .ov .card {
     display: grid; justify-items: center; gap: 0.4cqh;
     padding: 1.4cqh 2.6cqw 1.8cqh;
@@ -165,12 +179,39 @@
   .card small { font-size: max(10px, 3cqh); color: var(--muted); }
   .ov .fine { font-size: max(10px, 2.8cqh); color: var(--muted); opacity: 0.8; }
 
+  /* title screen: sized so everything fits the 16:9 stage without scrolling */
+  .ov { scrollbar-width: none; }
+  .ov::-webkit-scrollbar { display: none; }
+  #ovTitle { gap: 1.8cqh; padding: 3cqh 5cqw; }
+  #ovTitle h2 { font-size: max(18px, 9cqh); }
+  #ovTitle p { font-size: max(10px, 3.4cqh); line-height: 1.4; max-width: 80ch; }
+  #ovTitle ul { font-size: max(9px, 3cqh); gap: 0.6cqh 2.4cqw; }
+  #ovTitle .card { padding: 1cqh 2.4cqw 1.2cqh; gap: 0.2cqh; }
+  #ovTitle .card canvas { width: max(40px, 13cqh); height: max(40px, 13cqh); }
+  #ovTitle .card b { font-size: max(11px, 3.6cqh); }
+  #ovTitle .card small { font-size: max(9px, 2.6cqh); }
+  #ovTitle .mode button { font-size: max(10px, 3cqh); padding: 0.7cqh 3cqw; }
+  #ovTitle > button { font-size: max(12px, 4cqh); padding: 1.2cqh 5cqw; }
+  #ovTitle .fine { font-size: max(8px, 2.4cqh); }
+
   .keys { margin: 0; font-size: 13px; color: var(--muted); text-align: center; }
   .keys kbd {
     font-family: var(--display); font-size: 12px; color: var(--ink);
     border: 1px solid var(--muted); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px;
   }
 
+  .pz {
+    display: none;
+    position: absolute; top: 6px; right: 6px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--plum);
+    background: rgba(47, 34, 68, 0.72);
+    color: var(--ink);
+    font: 700 13px/1 var(--body);
+    padding: 0;
+    touch-action: manipulation;
+  }
   .pad { display: none; width: 100%; max-width: 560px; justify-content: space-between; gap: 12px; user-select: none; -webkit-user-select: none; }
   .pad .grp { display: flex; gap: 10px; }
   .pad button {
@@ -195,6 +236,7 @@
   @media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
     .app { flex-direction: row; flex-wrap: wrap; align-content: center; }
     .bar { display: none; }
+    .pz { display: block; }
     .stage { width: min(100% , calc((100dvh - 24px) * 16 / 9)); order: 2; }
     .pad { position: fixed; inset: auto 0 calc(8px + env(safe-area-inset-bottom, 0px)) 0; max-width: none; padding-inline: 20px; pointer-events: none; }
     .pad .grp { pointer-events: auto; }
@@ -223,6 +265,7 @@
       <div><span class="lbl">TIME</span><b id="hTime">300</b></div>
       <div><span class="lbl">ชีวิต</span><b id="hLives">×3</b></div>
     </div>
+    <button class="pz" id="btnPause2" type="button" aria-label="พักเกม">II</button>
 
     <section class="ov" id="ovTitle">
       <h2>SUPER <span>BUBU</span> WORLD</h2>
@@ -236,12 +279,17 @@
           <b>ดูดู</b><small>หมีสีน้ำตาล</small>
         </button>
       </div>
+      <div class="mode" role="group" aria-label="จำนวนผู้เล่น">
+        <button type="button" data-mode="1" aria-pressed="true">เล่น 1 คน</button>
+        <button type="button" data-mode="2" aria-pressed="false">เล่น 2 คน</button>
+      </div>
       <p id="storyLine">ดูดูรออยู่ที่บ้านหลังเล็กปลายทาง พาบูบูวิ่งฝ่านาฬิกาปลุกจอมโวยวายกับผึ้งจอมป่วนไปให้ถึงก่อนหมดเวลา</p>
       <ul>
         <li><b>เหยียบ</b> ศัตรูจากด้านบน</li>
         <li><b>โขก</b> กล่อง ? เพื่อเก็บหัวใจ</li>
         <li><b>ชานมไข่มุก</b> ทำให้ตัวโตขึ้น</li>
-        <li><b>เค้ก</b> ได้หมวกบักเก็ต กด X ขว้างรองเท้าแตะ</li>
+        <li><b>กดทิศทาง 2 ครั้ง</b> เพื่อวิ่ง</li>
+        <li><b>เค้ก</b> ได้หมวกบักเก็ต กด ↓ ขว้างรองเท้าแตะ</li>
       </ul>
       <button id="btnStart" type="button">เริ่มเล่น</button>
       <p class="fine" id="bestLine">เกมล้อเลียนแบบแฟนเมด ไม่เกี่ยวข้องกับเจ้าของลิขสิทธิ์ตัวละครหรือเกมต้นฉบับ</p>
@@ -263,12 +311,12 @@
       <button type="button" data-k="right" aria-label="เดินขวา">▶</button>
     </div>
     <div class="grp">
-      <button type="button" class="run" data-k="run" aria-label="วิ่งหรือขว้าง">วิ่ง/ขว้าง</button>
+      <button type="button" class="run" data-k="run" aria-label="ขว้างรองเท้าแตะ">ขว้าง</button>
       <button type="button" class="jump" data-k="jump" aria-label="กระโดด">กระโดด</button>
     </div>
   </div>
 
-  <p class="keys">หน้าแรกกด <kbd>←</kbd> <kbd>→</kbd> เพื่อเลือกตัวละคร · ในเกม <kbd>←</kbd> <kbd>→</kbd> เดิน · <kbd>Z</kbd> / <kbd>Space</kbd> กระโดด (กดค้างเพื่อกระโดดสูง) · <kbd>X</kbd> / <kbd>Shift</kbd> วิ่ง และขว้างรองเท้าแตะเมื่อใส่หมวก · <kbd>P</kbd> พักเกม</p>
+  <p class="keys">หน้าแรกกด <kbd>←</kbd> <kbd>→</kbd> เพื่อเลือกตัวละคร · เล่น 2 คน: คนที่ 1 <kbd>A</kbd> <kbd>D</kbd> <kbd>W</kbd> <kbd>S</kbd> คนที่ 2 <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> · เล่นคนเดียว <kbd>←</kbd> <kbd>→</kbd> เดิน (กด 2 ครั้งติดกันเพื่อวิ่ง) · <kbd>↑</kbd> กระโดด (กดค้างเพื่อกระโดดสูง) · <kbd>↓</kbd> ขว้างรองเท้าแตะเมื่อใส่หมวก · <kbd>P</kbd> พักเกม</p>
 </main>
 
 <script>
@@ -333,6 +381,37 @@
     life: () => [660, 784, 1319, 1047, 1175, 1568].forEach((f, i) => tone(f, f, 0.08, "square", 0.05, i * 0.08)),
   };
   const sfx = (n) => SFX[n] && SFX[n]();
+
+  // ---------- music ----------
+  // Original four-bar chiptune loops, one per level, as MIDI notes on an eighth-note grid (0 = rest).
+  const SONGS = [
+    { bpm: 132,
+      lead: [72,0,76,0,79,0,76,0, 77,0,74,0,72,74,76,0, 72,0,76,0,79,0,84,0, 83,79,77,74,72,0,0,0],
+      bass: [48,0,55,0,48,0,55,0, 53,0,57,0,55,0,59,0, 48,0,55,0,52,0,55,0, 55,0,59,0,48,0,48,0] },
+    { bpm: 112,
+      lead: [69,0,72,0,77,0,76,74, 72,0,69,0,70,0,72,0, 74,0,77,0,81,0,79,77, 76,0,72,0,77,0,0,0],
+      bass: [53,0,60,0,53,0,60,0, 50,0,57,0,58,0,53,0, 58,0,62,0,53,0,60,0, 48,0,55,0,53,0,53,0] },
+    { bpm: 120,
+      lead: [69,0,72,0,76,0,72,0, 71,0,68,0,64,0,68,0, 69,0,72,0,77,0,76,72, 71,68,64,68,69,0,0,0],
+      bass: [45,0,52,0,45,0,52,0, 40,0,47,0,40,0,47,0, 41,0,48,0,41,0,48,0, 40,0,47,0,45,0,45,0] },
+  ];
+  const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  let musT = 0, musStep = 0, musLvl = -1;
+  // called every frame: schedules the next few notes a little ahead of the audio clock
+  function musicTick() {
+    if (!AC || muted || paused || state !== "play") { musT = 0; return; }
+    if (musLvl !== lvl) { musLvl = lvl; musStep = 0; musT = 0; }
+    const song = SONGS[lvl];
+    // the tune speeds up when time is running out
+    const stepDur = 30 / song.bpm / (time < 60 ? 1.3 : 1);
+    if (musT < AC.currentTime) musT = AC.currentTime + 0.05;
+    while (musT < AC.currentTime + 0.2) {
+      const i = musStep % song.lead.length, d = musT - AC.currentTime;
+      if (song.lead[i]) tone(hz(song.lead[i]), hz(song.lead[i]), stepDur * 0.9, "square", 0.022, d);
+      if (song.bass[i]) tone(hz(song.bass[i]), hz(song.bass[i]), stepDur * 1.6, "triangle", 0.05, d);
+      musT += stepDur; musStep++;
+    }
+  }
 
   // ---------- level ----------
   const SOLID = new Set(["#", "B", "?", "u", "=", "P"]);
@@ -443,25 +522,45 @@
   const FLAG_X = 198, HOUSE_X = 201, DUDU_X = 205;
 
   // ---------- input ----------
-  const K = { left: false, right: false, jump: false, run: false };
-  const KEYMAP = {
-    ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right",
-    Space: "jump", KeyZ: "jump", ArrowUp: "jump", KeyW: "jump",
-    ShiftLeft: "run", ShiftRight: "run", KeyX: "run",
+  // one input state per player; the touch pad always drives player 1
+  const mkInput = () => ({ K: { left: false, right: false, jump: false, run: false },
+                           jumpEdge: false, runEdge: false, dash: null, lastTap: { k: null, t: 0 } });
+  const IN = [mkInput(), mkInput()];
+  const KEYS_1P = {
+    ArrowLeft: [0, "left"], KeyA: [0, "left"], ArrowRight: [0, "right"], KeyD: [0, "right"],
+    ArrowUp: [0, "jump"], KeyW: [0, "jump"],
+    ArrowDown: [0, "run"], KeyS: [0, "run"],
   };
-  let jumpEdge = false, runEdge = false;
+  // two players share the keyboard: WASD for player 1, arrows for player 2
+  const KEYS_2P = {
+    KeyA: [0, "left"], KeyD: [0, "right"], KeyW: [0, "jump"], KeyS: [0, "run"],
+    ArrowLeft: [1, "left"], ArrowRight: [1, "right"], ArrowUp: [1, "jump"], ArrowDown: [1, "run"],
+  };
+  let twoP = false;
+  // running: tap a direction twice quickly and keep holding the second press
+  function press(k, i = 0) {
+    const I = IN[i];
+    if (I.K[k]) return;
+    if (k === "jump") I.jumpEdge = true;
+    if (k === "run") I.runEdge = true;
+    if (k === "left" || k === "right") {
+      const now = performance.now();
+      I.dash = I.lastTap.k === k && now - I.lastTap.t < 300 ? k : null;
+      I.lastTap = { k, t: now };
+    }
+    I.K[k] = true;
+  }
+  function release(k, i = 0) { const I = IN[i]; I.K[k] = false; if (I.dash === k) I.dash = null; }
   addEventListener("keydown", (e) => {
-    const k = KEYMAP[e.code];
     if (!ovTitle.hidden && (e.code === "ArrowLeft" || e.code === "ArrowRight")) {
       e.preventDefault();
       choose(e.code === "ArrowLeft" ? "bubu" : "dudu");
       return;
     }
+    const k = (twoP ? KEYS_2P : KEYS_1P)[e.code];
     if (k) {
       e.preventDefault();
-      if (k === "jump" && !K.jump) jumpEdge = true;
-      if (k === "run" && !K.run) runEdge = true;
-      K[k] = true;
+      press(k[1], k[0]);
     }
     if (e.code === "KeyP" || e.code === "Escape") togglePause();
     if (e.code === "Enter") {
@@ -469,19 +568,21 @@
       else if (!ovMsg.hidden) againBtn.click();
     }
   });
-  addEventListener("keyup", (e) => { const k = KEYMAP[e.code]; if (k) K[k] = false; });
-  addEventListener("blur", () => { for (const k in K) K[k] = false; });
+  addEventListener("keyup", (e) => {
+    for (const m of [KEYS_1P, KEYS_2P]) { const k = m[e.code]; if (k) release(k[1], k[0]); }
+  });
+  addEventListener("blur", () => IN.forEach((I, i) => { for (const k in I.K) release(k, i); }));
+  // long-press menus get in the way of held buttons on touch screens
+  document.querySelector(".app").addEventListener("contextmenu", (e) => e.preventDefault());
 
   document.querySelectorAll(".pad button").forEach((b) => {
     const k = b.dataset.k;
     const down = (e) => {
       e.preventDefault(); initAudio();
-      if (k === "jump" && !K.jump) jumpEdge = true;
-      if (k === "run" && !K.run) runEdge = true;
-      K[k] = true; b.classList.add("on");
+      press(k); b.classList.add("on");
       try { b.setPointerCapture(e.pointerId); } catch (_) {}
     };
-    const up = (e) => { e.preventDefault(); K[k] = false; b.classList.remove("on"); };
+    const up = (e) => { e.preventDefault(); release(k); b.classList.remove("on"); };
     b.addEventListener("pointerdown", down);
     b.addEventListener("pointerup", up);
     b.addEventListener("pointercancel", up);
@@ -514,11 +615,18 @@
     try { localStorage.setItem("bubu-hero", id); } catch (e) {}
     cards.forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.char === id)));
     const h = CHARS[id], o = CHARS[partner()];
-    document.getElementById("storyLine").textContent =
-      o.th + "รออยู่ที่บ้านหลังเล็กปลายทาง พา" + h.th + "วิ่งฝ่านาฬิกาปลุกจอมโวยวายกับผึ้งจอมป่วนไปให้ถึงก่อนหมดเวลา";
-    document.getElementById("hName").textContent = h.en;
+    document.getElementById("storyLine").textContent = twoP
+      ? "เล่นสองคนบนคีย์บอร์ดเดียว · คนที่ 1 (" + h.th + ") ใช้ A D เดิน W กระโดด S ขว้าง · คนที่ 2 (" + o.th + ") ใช้ ← → เดิน ↑ กระโดด ↓ ขว้าง"
+      : o.th + "รออยู่ที่บ้านหลังเล็กปลายทาง พา" + h.th + "วิ่งฝ่านาฬิกาปลุกจอมโวยวายกับผึ้งจอมป่วนไปให้ถึงก่อนหมดเวลา";
+    document.getElementById("hName").textContent = twoP ? h.en + "+" + o.en : h.en;
   }
   cards.forEach((c) => c.addEventListener("click", () => { initAudio(); choose(c.dataset.char); sfx("heart"); }));
+  const modeBtns = [...document.querySelectorAll(".mode button")];
+  modeBtns.forEach((b) => b.addEventListener("click", () => {
+    initAudio(); twoP = b.dataset.mode === "2";
+    modeBtns.forEach((m) => m.setAttribute("aria-pressed", String(m === b)));
+    choose(hero); sfx("heart");
+  }));
   choose(hero);
   function drawPreviews() {
     for (const c of cards) {
@@ -539,15 +647,22 @@
   againBtn.addEventListener("click", () => { initAudio(); ovMsg.hidden = true; newGame(); });
   document.getElementById("btnMenu").addEventListener("click", () => {
     ovMsg.hidden = true; ovTitle.hidden = false;
-    state = "title"; ents = []; parts = []; pops = []; goal = null; lvl = 0; L = null;
+    state = "title"; ents = []; parts = []; pops = []; goal = null; lvl = 0; L = null; PS = [];
     cards.find((c) => c.dataset.char === hero).focus({ preventScroll: true });
   });
   muteBtn.addEventListener("click", () => { initAudio(); muted = !muted; muteBtn.textContent = muted ? "เสียง: ปิด" : "เสียง: เปิด"; });
+  const pauseBtn2 = document.getElementById("btnPause2");
   pauseBtn.addEventListener("click", togglePause);
+  pauseBtn2.addEventListener("click", togglePause);
+  function showPause() {
+    pauseBtn.textContent = paused ? "เล่นต่อ" : "พักเกม";
+    pauseBtn2.textContent = paused ? "▶" : "II";
+    pauseBtn2.setAttribute("aria-label", paused ? "เล่นต่อ" : "พักเกม");
+  }
   function togglePause() {
     if (state !== "play") return;
     paused = !paused;
-    pauseBtn.textContent = paused ? "เล่นต่อ" : "พักเกม";
+    showPause();
   }
   function showMsg(title, text) {
     document.getElementById("msgTitle").innerHTML = title;
@@ -558,15 +673,17 @@
 
   // ---------- game state ----------
   let G = null, L = null, grid = null, ents = [], parts = [], pops = [], bumps = [];
-  let P = null, camX = 0, time = 300, state = "title", paused = false, stateT = 0, clock = 0;
+  // PS holds every player; P is the one currently being simulated
+  let PS = [], P = null, camX = 0, time = 300, state = "title", paused = false, stateT = 0, clock = 0;
   let goal = null, shots = [];
 
   let lvl = 0;
-  const PW = 14, SH = 19, BH = 30; // hero hitbox: width, small height, big height
+  // hero hitbox: width, small height, big height (one tile small, a little over a tile and a half big)
+  const PW = 12, SH = 15, BH = 25;
 
   function newGame() {
     G = { score: 0, hearts: 0, lives: 3, checkpoint: false, level: 0, carry: null };
-    paused = false; pauseBtn.textContent = "พักเกม";
+    paused = false; showPause();
     startLevel();
   }
   function startLevel() {
@@ -580,9 +697,16 @@
     parts = []; pops = []; bumps = []; shots = []; goal = null;
     time = 300;
     const sx = G.checkpoint ? 100 * T : 3 * T;
-    P = { x: sx, y: 13 * T - SH, w: PW, h: SH, vx: 0, vy: 0, face: 1, ground: false, big: false, hat: false, throwT: 0,
-          inv: 0, step: 0, coyote: 0, buf: 0, combo: 0 };
-    if (G.carry) { setBig(G.carry.big); P.hat = G.carry.hat; G.carry = null; }
+    PS = (twoP ? [hero, partner()] : [hero]).map((char, i) => ({
+      char, in: IN[i], x: sx - i * 16, y: 13 * T - SH, w: PW, h: SH, vx: 0, vy: 0, face: 1, ground: false,
+      big: false, hat: false, throwT: 0, inv: 0, step: 0, coyote: 0, buf: 0, combo: 0, dead: false, deadT: 0,
+      landT: 0, jumpT: 0, growT: 0, idleT: 0, skid: false }));
+    PS.forEach((p, i) => {
+      const c = G.carry && G.carry[i];
+      P = p;
+      if (c) { setBig(c.big); P.hat = c.hat; }
+    });
+    G.carry = null; P = PS[0];
     camX = clamp(P.x - VW * 0.4, 0, LW * T - VW);
     state = "play"; stateT = 0;
   }
@@ -591,7 +715,7 @@
   function setBig(b) {
     if (b === P.big) return;
     P.big = b;
-    if (b) { P.y -= BH - SH; P.h = BH; } else { P.y += BH - SH; P.h = SH; }
+    if (b) { P.y -= BH - SH; P.h = BH; P.growT = 0.5; } else { P.y += BH - SH; P.h = SH; }
   }
   function addScore(n, x, y) {
     G.score += n;
@@ -681,10 +805,12 @@
     else die();
   }
   function die() {
-    if (state !== "play") return;
-    state = "dying"; stateT = 0;
+    if (state !== "play" || P.dead) return;
+    P.dead = true; P.deadT = 0;
     P.vy = P.y > VH ? 0 : -360; P.vx = 0; P.hat = false; P.big && setBig(false);
     sfx("die");
+    // the level only restarts once nobody is left standing
+    if (PS.every((p) => p.dead)) { state = "dying"; stateT = 0; }
   }
 
   // ---------- update ----------
@@ -699,28 +825,65 @@
     for (const p of pops) p.t += dt;
     pops = pops.filter((p) => p.t < 0.9);
 
+    for (const p of PS) {
+      if (p.landT > 0) p.landT -= dt;
+      if (p.jumpT > 0) p.jumpT -= dt;
+      if (p.growT > 0) p.growT -= dt;
+      if (!p.dead) continue;
+      p.deadT += dt;
+      if (p.deadT > 0.45 && p.y < VH + 200) { p.vy += 1100 * dt; p.y += p.vy * dt; }
+    }
     if (state === "play") updatePlay(dt);
     else if (state === "dying") {
       stateT += dt;
-      if (stateT > 0.45) { P.vy += 1100 * dt; P.y += P.vy * dt; }
       if (stateT > 2.8) {
         G.lives--;
         if (G.lives <= 0) {
           state = "over"; saveBest(G.score);
-          showMsg("GAME <span>OVER</span>", "คะแนน " + G.score + " · หัวใจ " + G.hearts + " ดวง  " + CHARS[partner()].th + "ยังรออยู่ ลองใหม่อีกครั้งนะ");
+          showMsg("GAME <span>OVER</span>", "คะแนน " + G.score + " · หัวใจ " + G.hearts + " ดวง  " +
+            (twoP ? "บ้านยังรออยู่ปลายทาง" : CHARS[partner()].th + "ยังรออยู่") + " ลองใหม่อีกครั้งนะ");
         } else startLevel();
       }
     } else if (state === "goal") updateGoal(dt);
-    if (state !== "title") {
-      const target = clamp(P.x + P.w / 2 - VW * 0.42, 0, LW * T - VW);
+    if (state !== "title" && PS.length) {
+      // follow the middle of the living players, and never scroll one of them off the screen
+      const live = PS.filter((p) => !p.dead), seen = live.length ? live : PS;
+      const mid = seen.reduce((s, p) => s + p.x + p.w / 2, 0) / seen.length;
+      const target = clamp(mid - VW * 0.42, 0, LW * T - VW);
       camX += (target - camX) * Math.min(1, dt * 10);
+      if (live.length > 1) {
+        camX = clamp(camX, Math.max(...live.map((p) => p.x + p.w)) - VW, Math.min(...live.map((p) => p.x)));
+        camX = clamp(camX, 0, LW * T - VW);
+      }
     }
   }
 
   function updatePlay(dt) {
     time -= dt;
-    if (time <= 0) { time = 0; die(); return; }
-    const run = K.run, max = run ? 200 : 115;
+    if (time <= 0) { time = 0; for (P of PS) die(); return; }
+    for (P of PS) {
+      if (state !== "play") break;
+      updatePlayer(dt);
+    }
+    if (state !== "play") return;
+    updateEnts(dt);
+    updateShots(dt);
+  }
+
+  function updatePlayer(dt) {
+    const I = P.in, K = I.K;
+    if (P.dead) {
+      // a fallen friend drops back in beside the survivor, at the cost of a life
+      if (P.deadT > 2.5 && G.lives > 1) {
+        const o = PS.find((q) => !q.dead);
+        G.lives--;
+        Object.assign(P, { dead: false, x: o.x, y: o.y + o.h - SH, vx: 0, vy: 0, inv: 3, face: o.face });
+        poof(P.x + P.w / 2, P.y + P.h / 2); sfx("item");
+      }
+      I.jumpEdge = I.runEdge = false;
+      return;
+    }
+    const run = I.dash !== null && K[I.dash], max = run ? 200 : 115;
     const acc = P.ground ? (run ? 560 : 440) : 320;
     if (K.left && !K.right) { P.vx -= acc * dt * (P.vx > 0 ? 2.2 : 1); P.face = -1; }
     else if (K.right && !K.left) { P.vx += acc * dt * (P.vx < 0 ? 2.2 : 1); P.face = 1; }
@@ -731,26 +894,35 @@
     if (Math.abs(P.vx) > max) P.vx -= Math.sign(P.vx) * Math.min(Math.abs(P.vx) - max, 500 * dt);
 
     P.coyote = P.ground ? 0.09 : P.coyote - dt;
-    if (runEdge && P.hat && shots.length < 2) {
+    if (I.runEdge && P.hat && shots.filter((sh) => sh.o === P).length < 2) {
       shots.push({ x: P.face > 0 ? P.x + P.w + 2 : P.x - 10, y: P.y + P.h * 0.3, w: 8, h: 8,
-                   vx: P.face * 230, vy: 60, r: 0, t: 0 });
+                   vx: P.face * 230, vy: 60, r: 0, t: 0, o: P });
       P.throwT = 0.18;
       tone(900, 300, 0.12, "triangle", 0.08);
     }
-    runEdge = false;
+    I.runEdge = false;
     if (P.throwT > 0) P.throwT -= dt;
-    P.buf = jumpEdge ? 0.12 : P.buf - dt;
-    jumpEdge = false;
+    P.buf = I.jumpEdge ? 0.12 : P.buf - dt;
+    I.jumpEdge = false;
     if (P.buf > 0 && P.coyote > 0) {
       P.vy = -(330 + Math.abs(P.vx) * 0.18);
-      P.buf = 0; P.coyote = 0; P.ground = false;
+      P.buf = 0; P.coyote = 0; P.ground = false; P.jumpT = 0.14;
       sfx("jump");
     }
     let grav = 1800;
     if (P.vy < 0 && K.jump) grav *= 0.45;
     P.vy = Math.min(P.vy + grav * dt, 430);
+    const wasGround = P.ground, fallV = P.vy;
     const heads = move(P, dt);
+    if (!wasGround && P.ground && fallV > 150) {
+      P.landT = 0.14;
+      dust(P.x, P.y + P.h - 1); dust(P.x + P.w, P.y + P.h - 1);
+    }
     if (P.x < 0) { P.x = 0; P.vx = 0; }
+    if (twoP) {
+      const nx = clamp(P.x, camX, camX + VW - P.w);
+      if (nx !== P.x) { P.x = nx; P.vx = 0; }
+    }
     if (heads.length) {
       const cx = P.x + P.w / 2;
       heads.sort((a, b) => Math.abs(a[0] * T + 8 - cx) - Math.abs(b[0] * T + 8 - cx));
@@ -759,6 +931,11 @@
     if (P.ground) P.combo = 0;
     P.step += Math.abs(P.vx) * dt * 0.09;
     if (P.inv > 0) P.inv -= dt;
+    P.idleT = P.ground && P.vx === 0 ? P.idleT + dt : 0;
+    // skidding when the stick is thrown against the direction of travel
+    P.skid = P.ground && Math.abs(P.vx) > 50 && ((K.left && !K.right && P.vx > 0) || (K.right && !K.left && P.vx < 0));
+    if ((P.skid || (run && P.ground && Math.abs(P.vx) > 180)) && Math.random() < dt * 14)
+      dust(P.x + P.w / 2 - Math.sign(P.vx) * 4, P.y + P.h - 1);
 
     // hearts floating in the air
     const l = Math.floor(P.x / T), r = Math.floor((P.x + P.w - 0.01) / T);
@@ -768,10 +945,6 @@
     }
     if (P.x > 100 * T) G.checkpoint = true;
     if (P.y > VH + 24) { die(); return; }
-
-    updateEnts(dt);
-    updateShots(dt);
-
     if (P.x + P.w >= FLAG_X * T + 6) startGoal();
   }
 
@@ -813,12 +986,14 @@
       }
       if (e.y > VH + 40 || e.x < camX - 200) { e.alive = false; continue; }
 
-      if (overlap(P, e)) {
+      for (P of PS) {
+        if (P.dead || !e.alive || e.flip || e.squash > 0 || !overlap(P, e)) continue;
         if (e.type === "cake") {
           if (e.rise < 1) continue;
           e.alive = false;
-          if (!P.big) setBig(true);
-          if (!P.hat) { P.hat = true; sfx("power"); } else sfx("item");
+          // a small bear only grows from a cake; the hat comes once already big
+          if (!P.big) { setBig(true); sfx("power"); }
+          else if (!P.hat) { P.hat = true; sfx("power"); } else sfx("item");
           addScore(1000, e.x, e.y);
         } else if (e.type === "boba") {
           if (e.rise < 1) continue;
@@ -829,7 +1004,7 @@
         } else if (P.vy > 0 && P.y + P.h - e.y < 10) {
           if (e.type === "clock") { e.squash = 0.5; sfx("stomp"); }
           else knock(e);
-          P.vy = K.jump ? -380 : -240;
+          P.vy = P.in.K.jump ? -380 : -240;
           const pts = [100, 200, 400, 800, 1000, 2000, 4000, 8000][Math.min(P.combo, 7)];
           P.combo++;
           addScore(pts, e.x, e.y);
@@ -848,6 +1023,9 @@
     ents = ents.filter((e) => e.alive);
   }
 
+  function dust(x, y) {
+    parts.push({ kind: "puff", x, y, vx: (Math.random() - 0.5) * 30, vy: -15, life: 0.3, t: 0, float: true });
+  }
   function poof(x, y) {
     for (let i = 0; i < 5; i++) parts.push({ kind: "puff", x, y, vx: (Math.random() - 0.5) * 80, vy: -40 - Math.random() * 60, life: 0.35, t: 0 });
   }
@@ -866,7 +1044,7 @@
       for (const e of ents) {
         if (!e.alive || e.flip || e.squash > 0 || e.stun > 0 || (e.type !== "clock" && e.type !== "bee")) continue;
         if (overlap(sh, e)) {
-          e.slip = true; e.stun = 0.7;
+          e.slip = LOOKS[CHARS[sh.o.char].kind].slip; e.stun = 0.7;
           addScore(200, e.x, e.y - 22);
           tone(520, 180, 0.12, "square", 0.07); tone(1200, 900, 0.08, "triangle", 0.05, 0.06);
           sh.dead = true; break;
@@ -882,34 +1060,60 @@
     const h = (12 * T - bottom) / T;
     const bonus = h > 8 ? 5000 : h > 6 ? 2000 : h > 4 ? 800 : h > 2 ? 400 : 100;
     addScore(bonus, P.x, P.y - 10);
-    P.x = FLAG_X * T + 8 - P.w; P.vx = 0; P.vy = 0;
-    goal = { phase: "slide", flagY: 2 * T + 4, t: 0 };
+    // close enough for the arms to reach the pole
+    P.x = FLAG_X * T + 8 - P.w / 2 - (P.big ? 7.2 : 4.5); P.vx = 0; P.vy = 0; P.face = 1;
+    goal = { phase: "slide", flagY: 2 * T + 4, t: 0, p: P };
     sfx("goal");
   }
   function updateGoal(dt) {
     goal.t += dt;
+    // lead grabbed the flag; anyone else still alive tags along
+    const lead = goal.p, crew = PS.filter((p) => !p.dead);
     if (goal.phase === "slide") {
       let done = true;
-      if (P.y + P.h < 12 * T) { P.y = Math.min(P.y + 150 * dt, 12 * T - P.h); done = false; }
-      if (goal.flagY < 11 * T - 4) { goal.flagY = Math.min(goal.flagY + 150 * dt, 11 * T - 4); done = false; }
-      if (done && goal.t > 0.9) { goal.phase = "walk"; P.x += P.w + 4; P.face = 1; }
+      if (lead.y + lead.h < 12 * T) {
+        lead.y = Math.min(lead.y + 80 * dt, 12 * T - lead.h); done = false;
+        // sparks off the pole on the way down, a squash and dust at the bottom
+        if (Math.random() < dt * 16) dust(FLAG_X * T + 8, lead.y + lead.h * 0.45);
+        if (lead.y + lead.h >= 12 * T) { lead.landT = 0.14; dust(lead.x, 12 * T - 1); dust(lead.x + lead.w, 12 * T - 1); }
+      }
+      if (goal.flagY < 11 * T - 4) { goal.flagY = Math.min(goal.flagY + 80 * dt, 11 * T - 4); done = false; }
+      for (const p of crew) if (p !== lead) { p.vx = 0; p.vy = Math.min(p.vy + 1800 * dt, 430); move(p, dt); }
+      if (done && goal.t > 0.9) {
+        goal.phase = "walk"; lead.x += lead.w + 4;
+        for (const p of crew) {
+          p.face = 1;
+          if (p === lead) continue;
+          poof(p.x + p.w / 2, p.y + p.h / 2);
+          p.x = FLAG_X * T + 2; p.y = 12 * T - p.h; p.vy = 0;
+        }
+      }
     } else if (goal.phase === "walk") {
-      P.vx = 75;
-      P.vy = Math.min(P.vy + 1800 * dt, 430);
-      move(P, dt);
-      P.step += Math.abs(P.vx) * dt * 0.09;
       const last = lvl === LEVELS - 1;
-      if (P.x >= (last ? (DUDU_X - 1) * T : HOUSE_X * T + 38)) {
-        P.vx = 0; goal.phase = last ? "love" : "enter"; goal.t = 0;
+      // on the last level everyone stops close enough to hug
+      const hw = (p) => (p.big ? 9 : 6);
+      const end = !last ? HOUSE_X * T + 38
+        : twoP ? (DUDU_X - 1) * T : DUDU_X * T + 6 - (hw(lead) + 6) * 0.85 - lead.w / 2;
+      for (const p of crew) {
+        const back = p === lead ? 0 : last ? (hw(lead) + hw(p)) * 0.85 : 18;
+        p.vx = p.x >= end - back ? 0 : 75;
+        p.vy = Math.min(p.vy + 1800 * dt, 430);
+        move(p, dt);
+        p.step += Math.abs(p.vx) * dt * 0.09;
+      }
+      if (lead.x >= end) {
+        goal.phase = last ? "love" : "enter"; goal.t = 0;
+        for (const p of crew) p.vx = 0;
+        if (last && twoP) lead.face = -1;
         const tb = Math.ceil(time) * 50;
-        addScore(tb, P.x, P.y - 16);
+        addScore(tb, lead.x, lead.y - 16);
         time = 0;
       }
     } else if (goal.phase === "enter") {
-      // rest stop: step through the door, then on to the next level with the current power-up
+      // rest stop: step through the door, then on to the next level with the current power-ups
       if (goal.t > 1.4) {
         G.level++; G.checkpoint = false;
-        G.carry = { big: P.big, hat: P.hat };
+        G.carry = PS.map((p) => (p.dead ? null : { big: p.big, hat: p.hat }));
         startLevel();
       }
     } else if (goal.phase === "love") {
@@ -917,7 +1121,7 @@
         vx: (Math.random() - 0.5) * 40, vy: -120 - Math.random() * 60, life: 1.6, t: 0, float: true });
       if (goal.t > 3 && ovMsg.hidden) {
         state = "won"; saveBest(G.score);
-        showMsg(CHARS[hero].th + "ถึง<span>บ้าน</span>แล้ว!", CHARS[partner()].th + "ดีใจมาก ผ่านครบ " + LEVELS + " ด่าน ได้รับคะแนนรวม " + G.score + " และเก็บหัวใจ " + G.hearts + " ดวงระหว่างทาง");
+        showMsg((twoP ? "ทั้งคู่" : CHARS[hero].th) + "ถึง<span>บ้าน</span>แล้ว!", (twoP ? "ช่วยกันจนสำเร็จ" : CHARS[partner()].th + "ดีใจมาก") + " ผ่านครบ " + LEVELS + " ด่าน ได้รับคะแนนรวม " + G.score + " และเก็บหัวใจ " + G.hearts + " ดวงระหว่างทาง");
       }
     }
   }
@@ -953,8 +1157,8 @@
   // dot eyes set wide, round blush, a "w" mouth with a pink tongue. The white bear has solid dark ears and
   // a dark bow at the neck; the brown bear has fur-coloured ears with a dark inner and orange blush.
   const LOOKS = {
-    panda: { fur: "#ffffff", ear: LINE, inner: null, blush: "#f9b3b8", bow: true, hat: "#f7a3ad", feet: LINE, pack: "#c9977a" },
-    brown: { fur: "#c9977a", ear: "#c9977a", inner: "#6e4034", blush: "#f6c47a", bow: false, hat: "#8fd0f5", feet: null, pack: "#ffffff" },
+    panda: { fur: "#ffffff", ear: LINE, inner: null, blush: "#f9b3b8", bow: true, hat: "#f7a3ad", feet: LINE, pack: "#ef5b6b", slip: ["#f29aa6", "#d9536a"] },
+    brown: { fur: "#c9977a", ear: "#c9977a", inner: "#6e4034", blush: "#f6c47a", bow: false, hat: "#8fd0f5", feet: null, pack: "#8fd0f5", slip: ["#8fd0f5", "#3f8fc4"] },
   };
   // Round-capped limb stroke. The body is drawn in two passes, every part in the outline colour and
   // then every part in fur, so the torso and its stubby limbs fuse into one chubby silhouette.
@@ -978,17 +1182,22 @@
     const k = LOOKS[kind];
     ctx.save();
     ctx.translate(cx, by);
-    ctx.scale(s * face, s);
+    ctx.scale(s * face * (opt.sx || 1), s * (opt.sy || 1));
     ctx.lineJoin = "round"; ctx.lineCap = "round";
     if (pose === "dead") { ctx.rotate(Math.PI); ctx.translate(0, 25); }
+    const cling = pose === "cling", hug = pose === "hug" || cling, skid = pose === "skid", fall = pose === "fall", wave = pose === "wave";
     const run = pose === "run";
     const ph = Math.sin(step), cs = Math.cos(step);
     const air = pose === "jump" || pose === "dead";
-    const idle = pose === "stand" || pose === "cheer";
+    const idle = pose === "stand" || pose === "cheer" || hug || wave;
     const breathe = idle ? Math.sin(clock * 3) * 0.35 : 0;
     const lw = 0.95, edge = lw * 2;
     // walk cycle: body bobs and waddles, the head follows a beat behind
     if (run) { ctx.translate(0, -(1 - Math.abs(ph)) * 0.8); ctx.rotate(0.05 + ph * 0.04); }
+    // hug: lean in and squeeze; skid: brace against the slide
+    if (cling) ctx.rotate(-0.1 + Math.sin(clock * 11) * 0.05);
+    else if (hug) ctx.rotate(0.1 + Math.sin(clock * 5) * 0.03);
+    if (skid) ctx.rotate(0.2);
     const headY = run ? Math.sin(step * 2 - 0.8) * 0.4 : breathe;
 
     // feet: each one lifts while it swings forward and stays planted on the way back
@@ -997,25 +1206,41 @@
       nfx = -1.5 + ph * 2.6; nfy = -2.5 - Math.max(0, cs) * 1.8;
       ffx = 3.1 - ph * 2.6; ffy = -2.5 - Math.max(0, -cs) * 1.8;
     } else if (air) { nfx = -3.6; nfy = -3.2; ffx = 5; ffy = -3.6; }
+    else if (skid) { nfx -= 2.2; ffx -= 2.2; }
+    else if (cling) {
+      // legs wrapped around the pole, shuffling on the way down
+      const sh = Math.sin(clock * 11) * 0.6;
+      nfx = 3.4; nfy = -3.6 + sh; ffx = 5.6; ffy = -2.9 - sh;
+    }
+    else if (fall) {
+      // legs dangle and paddle on the way down
+      const kick = Math.sin(clock * 18) * 0.5;
+      nfx = -2.6; ffx = 4.2; nfy = -2.3 + kick; ffy = -2.3 - kick;
+    }
     // arms: angle from straight down, positive swings toward the facing side
-    let na = -1.2 + breathe * 0.15, fa = 1.2 - breathe * 0.15, nl = 4.6, fl = 4.6;
+    let na = -1.2 + breathe * 0.15, fa = 1.2 - breathe * 0.15, nl = 3.8, fl = 3.8;
     if (run) { na = -0.85 - ph * 0.65; fa = 0.85 - ph * 0.65; }
     if (air || pose === "cheer") {
       const wave = pose === "cheer" ? Math.sin(clock * 12) * 0.3 : 0;
-      na = -1.8 + wave; fa = 1.8 - wave; nl = fl = 5.4;
+      na = -1.8 + wave; fa = 1.8 - wave; nl = fl = 4.4;
     }
-    if (opt.throwing) { fa = 1.45; fl = 6; }
+    if (fall) { const flap = Math.sin(clock * 20) * 0.2; na = -1.55 + flap; fa = 1.55 - flap; nl = fl = 4.2; }
+    if (skid) { na = -0.5; fa = 1.7; }
+    if (wave) { fa = 2 + Math.sin(clock * 12) * 0.35; fl = 4.4; }
+    // on the pole the far arm is kept short so both hands end at about the same spot
+    if (hug) { fa = 1.45; fl = cling ? 2.2 : 4.4; }
+    if (opt.throwing) { fa = 1.45; fl = 5; }
     const parts = (extra, color) => {
-      limb(4.2, -7.8, 4.2 + Math.sin(fa) * fl, -7.8 + Math.cos(fa) * fl, 2.4 + extra, color);
-      limb(-2.6, -7.8, -2.6 + Math.sin(na) * nl, -7.8 + Math.cos(na) * nl, 2.4 + extra, color);
+      if (!opt.noFar) limb(4.2, -7.8, 4.2 + Math.sin(fa) * fl, -7.8 + Math.cos(fa) * fl, 2.4 + extra, color);
+      if (!hug) limb(-2.6, -7.8, -2.6 + Math.sin(na) * nl, -7.8 + Math.cos(na) * nl, 2.4 + extra, color);
       limb(2.9, -4.6, ffx, ffy, 3 + extra, color);
       limb(-1.3, -4.6, nfx, nfy, 3 + extra, color);
     };
 
     // little backpack shaped like the partner, hanging behind the hip
-    rrect(-9.8, -6.8, 5.2, 5.4, 1.8, k.pack, LINE, 0.9);
-    ell(-8.7, -7.2, 0.85, 0.95, k.pack, LINE, 0.7); ell(-6.5, -7.2, 0.85, 0.95, k.pack, LINE, 0.7);
-    ell(-8.2, -4.2, 0.4, 0.4, LINE); ell(-6.6, -4.2, 0.4, 0.4, LINE);
+    rrect(-9.5, -9, 5.2, 5.4, 1.8, k.pack, LINE, 0.9);
+    ell(-8.4, -9.4, 0.85, 0.95, k.pack, LINE, 0.7); ell(-6.2, -9.4, 0.85, 0.95, k.pack, LINE, 0.7);
+    ell(-8.1, -6.4, 0.4, 0.4, LINE); ell(-6.6, -6.4, 0.4, 0.4, LINE);
     // torso and limbs: outline pass, then fur pass
     parts(edge, LINE);
     ell(0.8, -7.2, 4.5, 4, null, LINE, edge);
@@ -1049,7 +1274,7 @@
     ctx.lineWidth = 0.75;
     if (pose === "dead") {
       for (const ex of eyes) { ctx.beginPath(); ctx.moveTo(ex - 0.9, ey - 0.9); ctx.lineTo(ex + 0.9, ey + 0.9); ctx.moveTo(ex + 0.9, ey - 0.9); ctx.lineTo(ex - 0.9, ey + 0.9); ctx.stroke(); }
-    } else if (pose === "cheer") {
+    } else if (pose === "cheer" || hug) {
       for (const ex of eyes) { ctx.beginPath(); ctx.arc(ex, ey + 0.5, 1, Math.PI + 0.3, -0.3); ctx.stroke(); }
     } else if (idle && clock % 3.2 < 0.12) {
       for (const ex of eyes) { ctx.beginPath(); ctx.moveTo(ex - 1, ey); ctx.lineTo(ex + 1, ey); ctx.stroke(); }
@@ -1066,6 +1291,15 @@
     // the ears poke out in front of the hat
     if (opt.hat) { drawHat(k.hat); ears(); }
     ctx.translate(0, -headY);
+    // the hugging arm wraps over whoever stands in front
+    if (hug) {
+      const sq = Math.sin(clock * 5) * 0.3;
+      const reach = (cling ? 6 : 4.8) + sq;
+      limb(-0.4, -6, reach, -6.2, 2.4 + edge, LINE);
+      limb(-0.4, -6, reach, -6.2, 2.4, k.fur);
+      // blend the shoulder into the torso so no outline ring shows where the arm starts
+      ell(-0.4, -6, 2.1, 2.1, k.fur);
+    }
     // small bow tie tucked under the chin
     if (k.bow) {
       ctx.save(); ctx.translate(2, -8.2); ctx.scale(0.62, 0.62);
@@ -1094,18 +1328,18 @@
     ctx.beginPath(); ctx.moveTo(-2.6, -25.4); ctx.lineTo(-1.4, -26); ctx.moveTo(3, -25.9); ctx.lineTo(4.1, -25.2); ctx.stroke();
   }
   // pink and white striped flip-flop, as in the reference sticker
-  function drawSlipper(x, y, rot, sc = 1) {
+  function drawSlipper(x, y, rot, sc = 1, col = LOOKS.panda.slip) {
     ctx.save();
     ctx.translate(x, y); ctx.rotate(rot); ctx.scale(sc, sc);
     ctx.beginPath(); ctx.ellipse(0, 0, 5.4, 2.6, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "#f29aa6"; ctx.fill();
+    ctx.fillStyle = col[0]; ctx.fill();
     ctx.save(); ctx.clip();
     ctx.fillStyle = "#fff";
     for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(i * 2.6 - 1, -3); ctx.lineTo(i * 2.6 + 0.3, -3); ctx.lineTo(i * 2.6 + 2.3, 3); ctx.lineTo(i * 2.6 + 1, 3); ctx.fill(); }
     ctx.restore();
     ctx.beginPath(); ctx.ellipse(0, 0, 5.4, 2.6, 0, 0, Math.PI * 2);
     ctx.strokeStyle = LINE; ctx.lineWidth = 0.8; ctx.stroke();
-    ctx.strokeStyle = "#d9536a"; ctx.lineWidth = 1.1;
+    ctx.strokeStyle = col[1]; ctx.lineWidth = 1.1;
     ctx.beginPath(); ctx.moveTo(-1.6, -2); ctx.lineTo(1.6, 0); ctx.lineTo(-1.6, 2); ctx.stroke();
     ctx.restore();
   }
@@ -1127,24 +1361,43 @@
     ctx.translate(cx, by);
     if (e.flip) { ctx.translate(0, -7); ctx.rotate(Math.PI); ctx.translate(0, 7); }
     if (e.squash > 0) ctx.scale(1.25, 0.35);
+    const awake = !e.flip && !(e.squash > 0) && !(e.stun > 0);
+    // stomping walk: little hops with a squash on each landing and a side-to-side rock
+    if (awake) {
+      const hop = Math.abs(Math.sin(e.t * 6));
+      ctx.translate(0, -hop * 1.6);
+      ctx.rotate(Math.sin(e.t * 6) * 0.09);
+      ctx.scale(1 + (1 - hop) * 0.08, 1 - (1 - hop) * 0.08);
+    }
+    // the alarm goes off every few seconds: bells rattle and ring lines flash
+    const ringing = awake && e.t % 3 < 0.7;
+    const ring = ringing ? Math.sin(e.t * 60) * 0.9 : 0;
+    if (ringing) {
+      ctx.strokeStyle = "#ffd166"; ctx.lineWidth = 0.8;
+      for (const d of [-1, 1]) {
+        ctx.beginPath(); ctx.arc(d * 6.5, -15, 3 + (e.t * 8 % 2), d < 0 ? Math.PI * 1.05 : Math.PI * 1.6, d < 0 ? Math.PI * 1.4 : Math.PI * 1.95); ctx.stroke();
+      }
+    }
     const w = Math.sin(e.t * 12) * 1.6;
     ell(-3.5 + w, -1, 2.4, 1.4, INK);
     ell(3.5 - w, -1, 2.4, 1.4, INK);
     // bells
-    ell(-4.8, -13.5, 2.6, 2.2, "#ffd166", INK, 0.8);
-    ell(4.8, -13.5, 2.6, 2.2, "#ffd166", INK, 0.8);
+    ell(-4.8 + ring, -13.5, 2.6, 2.2, "#ffd166", INK, 0.8);
+    ell(4.8 + ring, -13.5, 2.6, 2.2, "#ffd166", INK, 0.8);
     ell(0, -7.6, 7, 6.8, "#ef5b6b", INK);
     ell(0, -7.6, 5, 4.9, "#fff6ec", INK, 0.6);
     // angry face
     ctx.strokeStyle = INK; ctx.lineWidth = 0.9;
     ctx.beginPath(); ctx.moveTo(-3.6, -10.4); ctx.lineTo(-0.8, -9.2); ctx.moveTo(3.6, -10.4); ctx.lineTo(0.8, -9.2); ctx.stroke();
-    ell(-2, -8, 0.8, 1, INK); ell(2, -8, 0.8, 1, INK);
+    // blinks, and the eyes go wide while the alarm rings
+    const eh = ringing ? 1.3 : (e.t + 1) % 2.7 < 0.12 ? 0.2 : 1;
+    ell(-2, -8, 0.8, eh, INK); ell(2, -8, 0.8, eh, INK);
     ctx.beginPath(); ctx.arc(0, -4.2, 1.6, Math.PI + 0.3, -0.3); ctx.stroke();
     // hands ticking
     ctx.lineWidth = 0.5;
     const a = e.t * 3;
     ctx.beginPath(); ctx.moveTo(0, -7.6); ctx.lineTo(Math.cos(a) * 3.2, -7.6 + Math.sin(a) * 3.2); ctx.stroke();
-    if (e.slip) { drawSlipper(1.6, -15.6, -0.6, 1.2); dizzy(e, -21); }
+    if (e.slip) { drawSlipper(1.6, -15.6, -0.6, 1.2, e.slip); dizzy(e, -21); }
     ctx.restore();
   }
   // little stars circling a dazed enemy's head
@@ -1160,6 +1413,12 @@
     ctx.save();
     ctx.translate(cx, cy);
     if (e.flip) ctx.rotate(Math.PI);
+    else if (!(e.stun > 0)) {
+      // nose dips and lifts with the flight path, and the body pulses with each buzz
+      ctx.rotate(-Math.cos(e.t * 2.2) * 0.2);
+      const buzz = Math.sin(e.t * 16) * 0.05;
+      ctx.scale(1 + buzz, 1 - buzz);
+    }
     const flap = Math.abs(Math.sin(e.t * 30)) * 3 + 1;
     ell(-1, -6, 3, flap, "rgba(255,255,255,.85)", INK, 0.6);
     ell(3, -6, 3, flap, "rgba(255,255,255,.85)", INK, 0.6);
@@ -1170,7 +1429,16 @@
     ell(-4.4, -1, 1, 1.2, INK); ell(-4.1, -1.3, 0.35, 0.35, "#fff");
     ctx.strokeStyle = INK; ctx.lineWidth = 0.7;
     ctx.beginPath(); ctx.moveTo(-6, -3.6); ctx.lineTo(-3.4, -2.6); ctx.stroke();
-    if (e.slip) { drawSlipper(-1, -5.8, -0.5, 1.1); dizzy(e, -11); }
+    // twitching antennae and a jabbing stinger
+    const tw = Math.sin(e.t * 9) * 0.9;
+    ctx.lineWidth = 0.6;
+    ctx.beginPath(); ctx.moveTo(-5, -4); ctx.quadraticCurveTo(-6.5, -6.5, -8 + tw, -6.8);
+    ctx.moveTo(-3.6, -4.6); ctx.quadraticCurveTo(-4.6, -7.4, -6 + tw, -8); ctx.stroke();
+    ell(-8 + tw, -6.8, 0.6, 0.6, INK); ell(-6 + tw, -8, 0.6, 0.6, INK);
+    const jab = Math.max(0, Math.sin(e.t * 5)) * 1.6;
+    ctx.fillStyle = INK;
+    ctx.beginPath(); ctx.moveTo(6.6, -0.4); ctx.lineTo(9 + jab, 0.6); ctx.lineTo(6.4, 1.6); ctx.fill();
+    if (e.slip) { drawSlipper(-1, -5.8, -0.5, 1.1, e.slip); dizzy(e, -11); }
     ctx.restore();
   }
   function drawBoba(x, y) {
@@ -1191,10 +1459,71 @@
   function hash(n) { const s = Math.sin(n * 127.1) * 43758.5453; return s - Math.floor(s); }
   // one backdrop per level: day, sunset, night
   const THEMES = [
-    { sky: ["#8fd3ff", "#c9ecff", "#ffe3f1"], far: "#d7c6f2", near: "#a9e3c4", cloud: "#fff" },
-    { sky: ["#ff9a76", "#ffc48a", "#ffe9c4"], far: "#e3a6c0", near: "#c9d68a", cloud: "#fff3e6" },
-    { sky: ["#1f1a4a", "#3d2f73", "#7a5a9c"], far: "#4b3f85", near: "#3f7a6e", cloud: "#cfc6ee", stars: true },
+    { sky: ["#8fd3ff", "#c9ecff", "#ffe3f1"], far: "#d7c6f2", near: "#a9e3c4", cloud: "#fff", orb: "#ffe27a", orbY: 46, amb: "butterfly" },
+    { sky: ["#ff9a76", "#ffc48a", "#ffe9c4"], far: "#e3a6c0", near: "#c9d68a", cloud: "#fff3e6", orb: "#ff6f5e", orbY: 118, amb: "bird" },
+    { sky: ["#1f1a4a", "#3d2f73", "#7a5a9c"], far: "#4b3f85", near: "#3f7a6e", cloud: "#cfc6ee", stars: true, orb: "#fff6d8", orbY: 44, amb: "firefly" },
   ];
+  const wrap = (a, n) => ((a % n) + n) % n;
+  // sun or moon behind the hills
+  function drawOrb(th) {
+    const ox = VW * 0.78 - camX * 0.02, oy = th.orbY;
+    if (th.stars) {
+      ell(ox, oy, 12, 12, th.orb);
+      ell(ox + 5, oy - 3, 10.5, 10.5, th.sky[0]);
+      // a shooting star every few seconds
+      const t = clock % 7;
+      if (t < 0.7) {
+        const sx = VW * 0.15 + t * 260, sy = 16 + t * 70;
+        ctx.strokeStyle = `rgba(255,246,236,${1 - t / 0.7})`; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 22, sy - 6); ctx.stroke();
+      }
+      return;
+    }
+    ctx.globalAlpha = 0.22 + Math.sin(clock * 2) * 0.06;
+    ell(ox, oy, 21 + Math.sin(clock * 2) * 2, 21 + Math.sin(clock * 2) * 2, th.orb);
+    ctx.globalAlpha = 1;
+    ell(ox, oy, 13, 13, th.orb);
+    if (th.amb === "butterfly") {
+      // slowly turning rays on the daytime sun
+      ctx.strokeStyle = th.orb; ctx.lineWidth = 1.6; ctx.lineCap = "round";
+      for (let i = 0; i < 8; i++) {
+        const a = clock * 0.4 + i * Math.PI / 4;
+        ctx.beginPath(); ctx.moveTo(ox + Math.cos(a) * 17, oy + Math.sin(a) * 17);
+        ctx.lineTo(ox + Math.cos(a) * 21, oy + Math.sin(a) * 21); ctx.stroke();
+      }
+    }
+  }
+  // drifting wildlife in front of the hills: butterflies by day, birds at sunset, fireflies at night
+  function drawAmbient() {
+    const th = THEMES[lvl];
+    if (th.amb === "butterfly") {
+      for (let i = 0; i < 4; i++) {
+        const x = wrap(i * 130 + clock * 14 - camX * 0.8, VW + 40) - 20;
+        const y = 112 + i * 14 + Math.sin(clock * 1.6 + i * 2) * 16;
+        const f = Math.abs(Math.sin(clock * 14 + i)) * 2.4 + 0.4;
+        const col = i % 2 ? "#ffd166" : "#ff8fb1";
+        ell(x - f * 0.6, y, f, 2.6, col, INK, 0.5); ell(x + f * 0.6, y, f, 2.6, col, INK, 0.5);
+        ctx.fillStyle = INK; ctx.fillRect(x - 0.4, y - 2, 0.8, 4);
+      }
+    } else if (th.amb === "bird") {
+      ctx.strokeStyle = "#7a3b4a"; ctx.lineWidth = 1; ctx.lineCap = "round";
+      for (let i = 0; i < 4; i++) {
+        const x = VW + 20 - wrap(clock * 26 + i * 120 + camX * 0.3, VW + 40);
+        const y = 48 + i * 13 + Math.sin(clock * 1.2 + i) * 5;
+        const f = Math.sin(clock * 9 + i * 1.7) * 2.5;
+        ctx.beginPath(); ctx.moveTo(x - 4, y - f); ctx.lineTo(x, y); ctx.lineTo(x + 4, y - f); ctx.stroke();
+      }
+    } else {
+      for (let i = 0; i < 12; i++) {
+        const x = wrap(hash(i + 3) * VW + Math.sin(clock * 0.6 + i) * 14 - camX * 0.7, VW);
+        const y = 110 + hash(i + 20) * 80 + Math.cos(clock * 0.8 + i * 1.3) * 8;
+        const a = 0.35 + 0.65 * Math.abs(Math.sin(clock * 1.8 + i * 0.9));
+        ctx.globalAlpha = a * 0.3; ell(x, y, 3.2, 3.2, "#f4ff9a");
+        ctx.globalAlpha = a; ell(x, y, 1.1, 1.1, "#f4ff9a");
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
   function drawBackdrop() {
     const th = THEMES[lvl];
     const g = ctx.createLinearGradient(0, 0, 0, VH);
@@ -1207,6 +1536,7 @@
       }
       ctx.globalAlpha = 1;
     }
+    drawOrb(th);
     // far hills
     ctx.fillStyle = th.far;
     ctx.beginPath(); ctx.moveTo(0, VH);
@@ -1220,9 +1550,13 @@
     for (let i = Math.floor(off / 150) - 1; i < Math.floor((off + VW) / 150) + 2; i++) {
       const x = i * 150 - off + hash(i) * 60, y = 22 + hash(i + 9) * 50;
       ctx.fillStyle = "rgba(255,255,255,.95)";
-      ell(x, y, 16, 8, th.cloud); ell(x + 14, y - 5, 12, 9, th.cloud); ell(x + 28, y, 14, 7, th.cloud);
-      ell(x + 3, y + 1, 1.2, 1.4, "#c2b4dc"); ell(x + 9, y + 1, 1.2, 1.4, "#c2b4dc");
-      ell(x + 6, y + 3.4, 1.6, 0.8, "rgba(255,143,177,.8)");
+      // clouds bob, their puffs swell in turn, and they blink now and then
+      const cy = y + Math.sin(clock * 1.3 + i * 2) * 1.8;
+      const q1 = Math.sin(clock * 2.2 + i) * 0.9, q2 = Math.sin(clock * 2.2 + i + 2.1) * 0.9, q3 = Math.sin(clock * 2.2 + i + 4.2) * 0.9;
+      ell(x, cy, 16 + q1, 8 + q1 * 0.6, th.cloud); ell(x + 14, cy - 5 - q2 * 0.5, 12 + q2, 9 + q2, th.cloud); ell(x + 28, cy, 14 + q3, 7 + q3 * 0.6, th.cloud);
+      const eh = (clock + i * 1.7) % 3.6 < 0.14 ? 0.25 : 1.4;
+      ell(x + 3, cy + 1, 1.2, eh, "#c2b4dc"); ell(x + 9, cy + 1, 1.2, eh, "#c2b4dc");
+      ell(x + 6, cy + 3.4, 1.6, 0.8, "rgba(255,143,177,.8)");
     }
     // near hills
     ctx.fillStyle = th.near;
@@ -1273,7 +1607,7 @@
       ctx.fillStyle = "#8a72ad"; ctx.fillRect(x, y + T - 2, T, 2); ctx.fillRect(x + T - 2, y, 2, T);
     } else if (c === "c") {
       const sx = Math.cos(clock * 3 + tx * 0.7);
-      ctx.save(); ctx.translate(x + 8, y + 8); ctx.scale(Math.max(0.2, Math.abs(sx)), 1);
+      ctx.save(); ctx.translate(x + 8, y + 8 + Math.sin(clock * 3 + tx) * 1.5); ctx.scale(Math.max(0.2, Math.abs(sx)), 1);
       heart(0, 0, 10, sx > 0 ? "#ff6f9c" : "#ff9dbc");
       ctx.restore();
     }
@@ -1288,24 +1622,46 @@
     ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.stroke();
     // pearls at the bottom
     const n = 6;
-    for (let i = 0; i < n; i++) ell(x + 6 + i * 4, top + h - 4 - (i % 2) * 2.5, 1.8, 1.8, INK);
+    for (let i = 0; i < n; i++) ell(x + 6 + i * 4, top + h - 4 - (i % 2) * 2.5 - Math.abs(Math.sin(clock * 2.5 + i + p.x)) * 1.6, 1.8, 1.8, INK);
     for (let i = 0; i < n - 1; i++) ell(x + 8 + i * 4, top + h - 8 - (i % 2) * 1.5, 1.6, 1.6, "#4a3a44");
     // heart sticker
     if (p.h > 2) heart(x + 16, top + 18, 8, "#ff8fb1");
     // lid
     rrect(x - 2, top, 36, 7, 3, "#ff8fb1", INK, 1);
     ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.fillRect(x + 2, top + 1.5, 10, 1.4);
+    // little hearts of steam drifting up from the lid
+    for (let i = 0; i < 2; i++) {
+      const t = (clock * 0.45 + p.x * 0.37 + i * 0.5) % 1;
+      ctx.globalAlpha = (1 - t) * 0.8;
+      heart(x + 16 + Math.sin(t * 6 + i * 2) * 4, top - 4 - t * 18, 5 - t * 2, "#ffc2d4", null);
+    }
+    ctx.globalAlpha = 1;
   }
 
   function drawBush(tx) {
     const x = tx * T, y = 13 * T;
     ctx.fillStyle = "#5cb874";
-    ell(x + 6, y - 5, 8, 6, "#6cc683"); ell(x + 18, y - 7, 10, 8, "#6cc683"); ell(x + 30, y - 5, 8, 6, "#6cc683");
-    ell(x + 12, y - 9, 1.3, 1.3, "#ff8fb1"); ell(x + 24, y - 11, 1.3, 1.3, "#ffd166");
+    // leaves rustle and the flowers nod
+    // each clump breathes on its own beat, and every few seconds the whole bush gives a quick shiver
+    const sw = Math.sin(clock * 2 + tx) * 0.9;
+    const shiver = (clock + tx * 0.7) % 4 < 0.5 ? Math.sin(clock * 40) * 1.1 : 0;
+    const p1 = Math.sin(clock * 3.1 + tx) * 0.7, p2 = Math.sin(clock * 2.6 + tx + 2) * 0.9, p3 = Math.sin(clock * 3.4 + tx + 4) * 0.7;
+    ell(x + 6 + sw * 0.5 + shiver, y - 5, 8 + p1, 6 - p1 * 0.6, "#6cc683");
+    ell(x + 30 + sw * 0.5 - shiver, y - 5, 8 + p3, 6 - p3 * 0.6, "#6cc683");
+    ell(x + 18 + sw + shiver * 0.6, y - 7 - p2 * 0.5, 10 - p2 * 0.5, 8 + p2, "#6cc683");
+    ell(x + 12 + sw * 1.4 + shiver, y - 9 - p1, 1.3, 1.3, "#ff8fb1"); ell(x + 24 + sw * 1.4 - shiver, y - 11 - p2, 1.3, 1.3, "#ffd166");
   }
 
   function drawHouse() {
     const x = HOUSE_X * T, by = 13 * T;
+    // chimney with puffs of smoke
+    rrect(x + 46, by - 94, 9, 20, 1, "#e88a64", INK, 1);
+    for (let i = 0; i < 3; i++) {
+      const t = (clock * 0.35 + i / 3) % 1;
+      ctx.globalAlpha = (1 - t) * 0.75;
+      ell(x + 50.5 + Math.sin(t * 5 + i) * 3, by - 97 - t * 26, 2.5 + t * 4, 2.2 + t * 3.4, "#fff");
+    }
+    ctx.globalAlpha = 1;
     // walls
     rrect(x, by - 64, 64, 64, 2, "#fff1e2", INK, 1.2);
     // roof
@@ -1313,11 +1669,15 @@
     ctx.fillStyle = "#ff8fb1"; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.2; ctx.stroke();
     heart(x + 32, by - 78, 12, "#fff6ec");
     // window
-    rrect(x + 8, by - 52, 16, 14, 2, "#bfe6ff", INK, 1);
+    // lamplight flickers in the window after dark
+    const lit = THEMES[lvl].stars ? `rgb(255,${214 + Math.sin(clock * 9) * 10 | 0},120)` : "#bfe6ff";
+    rrect(x + 8, by - 52, 16, 14, 2, lit, INK, 1);
     ctx.fillStyle = INK; ctx.fillRect(x + 15.5, by - 52, 1, 14); ctx.fillRect(x + 8, by - 45.5, 16, 1);
     // door
     rrect(x + 36, by - 38, 18, 38, [9, 9, 0, 0], "#c98b5a", INK, 1);
     ell(x + 50, by - 18, 1.3, 1.3, "#ffd166");
+    // the door swings open as the heroes step inside
+    if (state === "goal" && goal && goal.phase === "enter") rrect(x + 38, by - 35, 14, 35, [7, 7, 0, 0], "#3a2430");
     // sign
     rrect(x + 4, by - 28, 26, 10, 2, "#ffd166", INK, 0.8);
     ctx.fillStyle = INK; ctx.font = '700 7px "Pixelify Sans", ui-monospace, monospace';
@@ -1331,18 +1691,23 @@
     ctx.strokeStyle = INK; ctx.lineWidth = 0.6; ctx.strokeRect(px - 1, 2 * T, 2, 10 * T);
     ell(px, 2 * T - 2, 3, 3, "#ffd166", INK, 0.8);
     const fy = goal ? goal.flagY : 2 * T + 4;
-    ctx.beginPath(); ctx.moveTo(px - 1, fy); ctx.lineTo(px - 20, fy + 7); ctx.lineTo(px - 1, fy + 14); ctx.closePath();
+    // the pennant ripples in the wind
+    const wv = Math.sin(clock * 6);
+    ctx.beginPath(); ctx.moveTo(px - 1, fy);
+    ctx.quadraticCurveTo(px - 10, fy + 2 + wv * 2, px - 20 + wv, fy + 7 + Math.cos(clock * 6) * 1.5);
+    ctx.quadraticCurveTo(px - 10, fy + 12 + wv * 2, px - 1, fy + 14); ctx.closePath();
     ctx.fillStyle = "#ff6f9c"; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.8; ctx.stroke();
     heart(px - 8, fy + 7, 6, "#fff6ec", null);
   }
 
   function drawDudu() {
     const love = state === "goal" && goal && goal.phase === "love";
-    const hop = love ? Math.abs(Math.sin(goal.t * 7)) * 5 : 0;
-    drawBear(DUDU_X * T + 6, 13 * T - hop, 0.95, -1, 0, love ? "cheer" : "stand", CHARS[partner()].kind);
+    // waves once the hero comes into view, then hugs back at the end
+    const near = PS[0] && Math.abs(PS[0].x - DUDU_X * T) < 7 * T;
+    drawBear(DUDU_X * T + 6, 13 * T, 0.64, -1, 0, love ? "hug" : near ? "wave" : "stand", CHARS[partner()].kind);
     if (!love) {
       // waiting bubble
-      const bx = DUDU_X * T + 16, by = 13 * T - 36 + Math.sin(clock * 2) * 1.5;
+      const bx = DUDU_X * T + 12, by = 13 * T - 24 + Math.sin(clock * 2) * 1.5;
       rrect(bx, by - 12, 16, 12, 4, "#fff", INK, 0.8);
       heart(bx + 8, by - 6, 7, "#ff6f9c", null);
     }
@@ -1352,6 +1717,7 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
     drawBackdrop();
+    drawAmbient();
     const cam = Math.round(camX * scale) / scale;
     ctx.save();
     ctx.translate(-cam, 0);
@@ -1367,7 +1733,7 @@
         const b = bumps.find((q) => q.tx === tx && q.ty === ty);
         drawTile(c, tx, ty, b ? -Math.sin((b.t / 0.2) * Math.PI) * 5 : 0);
       }
-      if (lvl === LEVELS - 1 && cam + VW > DUDU_X * T - 20) drawDudu();
+      if (lvl === LEVELS - 1 && !twoP && cam + VW > DUDU_X * T - 20) drawDudu();
       for (const e of ents) {
         if (e.x > cam + VW + 20 || e.x + e.w < cam - 20) continue;
         if (e.type === "clock") drawClock(e);
@@ -1375,8 +1741,8 @@
         else if (e.type === "boba") drawBoba(e.x, e.y);
         else if (e.type === "cake") drawCake(e.x, e.y);
       }
-      drawPlayer();
-      for (const sh of shots) drawSlipper(sh.x + 4, sh.y + 4, sh.r, 0.95);
+      drawPlayers();
+      for (const sh of shots) drawSlipper(sh.x + 4, sh.y + 4, sh.r, 0.95, LOOKS[CHARS[sh.o.char].kind].slip);
       drawParts();
     }
     ctx.restore();
@@ -1388,19 +1754,33 @@
     }
   }
 
-  function drawPlayer() {
-    if (!P || state === "title") return;
-    if (P.inv > 0 && Math.floor(P.inv * 16) % 2 === 0) return;
+  function drawPlayers() {
+    if (state === "title") return;
     if (state === "goal" && goal.phase === "enter") return;
-    let pose = "stand";
-    if (state === "dying") pose = "dead";
-    else if (state === "goal" && goal.phase === "slide") pose = "jump";
-    else if (state === "goal" && goal.phase === "love") pose = "cheer";
-    else if (!P.ground) pose = "jump";
-    else if (Math.abs(P.vx) > 8) pose = "run";
-    const s = P.big ? 1.3 : 0.85;
-    drawBear(P.x + P.w / 2, P.y + P.h, s, P.face, P.step, pose, CHARS[hero].kind,
-      { hat: P.hat, throwing: P.throwT > 0 && pose !== "dead" });
+    // player 1 is drawn last so it stays on top
+    for (let i = PS.length - 1; i >= 0; i--) {
+      const p = PS[i];
+      if (p.inv > 0 && Math.floor(p.inv * 16) % 2 === 0) continue;
+      if (p.dead && p.y > VH + 60) continue;
+      let pose = "stand";
+      if (p.dead) pose = "dead";
+      else if (state === "goal" && goal.phase === "slide" && p === goal.p) pose = p.y + p.h < 12 * T ? "cling" : "cheer";
+      else if (state === "goal" && goal.phase === "love") pose = "hug";
+      else if (!p.ground) pose = p.vy > 80 ? "fall" : "jump";
+      else if (p.skid && state === "play") pose = "skid";
+      else if (Math.abs(p.vx) > 8) pose = "run";
+      else if (state === "play" && p.idleT > 3 && p.idleT % 4 < 1.2) pose = "wave";
+      // squash on landing, stretch on take-off, wobble while growing
+      let sx = 1, sy = 1;
+      if (p.landT > 0) { const q = p.landT / 0.14; sx = 1 + 0.16 * q; sy = 1 - 0.2 * q; }
+      else if (p.jumpT > 0) { const q = p.jumpT / 0.14; sx = 1 - 0.1 * q; sy = 1 + 0.14 * q; }
+      const grow = p.growT > 0 ? 1 + Math.sin(p.growT * 40) * 0.25 * (p.growT / 0.5) : 1;
+      // one tile tall when small, about a tile and a half when big
+      const s = p.big ? 1.04 : 0.64;
+      drawBear(p.x + p.w / 2, p.y + p.h, s * grow, p.face, p.step, pose, CHARS[p.char].kind,
+        // in a hug the far arm goes behind the partner; this bear is drawn last, so it is simply hidden
+        { hat: p.hat, throwing: p.throwT > 0 && pose !== "dead", sx, sy, noFar: pose === "hug" && i === 0 });
+    }
   }
 
   function drawParts() {
@@ -1467,6 +1847,7 @@
       acc += dt;
       while (acc >= STEP) { update(STEP); acc -= STEP; }
     }
+    musicTick();
     draw();
     hud();
     requestAnimationFrame(frame);
