@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Super Bubu World</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,7 +19,8 @@
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html, body { height: 100%; }
+  /* manipulation: taps and pans only, so a quick double tap never zooms the page */
+  html, body { height: 100%; touch-action: manipulation; }
   body {
     margin: 0;
     background: var(--cabinet);
@@ -241,6 +242,24 @@
     .pad { position: fixed; inset: auto 0 calc(8px + env(safe-area-inset-bottom, 0px)) 0; max-width: none; padding-inline: 20px; pointer-events: none; }
     .pad .grp { pointer-events: auto; }
     .pad button { opacity: 0.72; }
+  }
+  /* phone held upright: the 16:9 stage is too short for the title screen, so while the menu is up
+     the stage grows to the full height and the menu is sized from its width instead */
+  @media (pointer: coarse) and (orientation: portrait) {
+    body.menu .pad, body.menu .hud { display: none; }
+    body.menu .stage { width: 100%; aspect-ratio: auto; height: calc(100dvh - 84px); }
+    body.menu #ovTitle { gap: 3.2cqw; padding: 5cqw 4cqw; }
+    body.menu #ovTitle h2 { font-size: 10.5cqw; }
+    body.menu #ovTitle p { font-size: 4.1cqw; line-height: 1.5; }
+    body.menu #ovTitle ul { font-size: 3.7cqw; gap: 1.6cqw 4cqw; }
+    body.menu #ovTitle .pick { gap: 4cqw; }
+    body.menu #ovTitle .card { padding: 2cqw 4cqw 2.6cqw; gap: 0.6cqw; }
+    body.menu #ovTitle .card canvas { width: 30cqw; height: 30cqw; }
+    body.menu #ovTitle .card b { font-size: 5.6cqw; }
+    body.menu #ovTitle .card small { font-size: 3.6cqw; }
+    body.menu #ovTitle .mode button { font-size: 4.2cqw; padding: 1.8cqw 5cqw; }
+    body.menu #ovTitle > button { font-size: 6cqw; padding: 2.6cqw 12cqw; box-shadow: 0 1.4cqw 0 var(--plum); }
+    body.menu #ovTitle .fine { font-size: 3cqw; }
   }
   @media (prefers-reduced-motion: reduce) {
     .ov button:active { transform: none; }
@@ -643,10 +662,16 @@
     }
   }
 
-  startBtn.addEventListener("click", () => { initAudio(); ovTitle.hidden = true; newGame(); });
+  // body.menu lets the stylesheet give the title screen the whole phone screen
+  function setMenu(on) { ovTitle.hidden = !on; document.body.classList.toggle("menu", on); }
+  setMenu(true);
+  // belt and braces against accidental zoom: double tap and pinch
+  document.addEventListener("dblclick", (e) => e.preventDefault());
+  document.addEventListener("gesturestart", (e) => e.preventDefault());
+  startBtn.addEventListener("click", () => { initAudio(); setMenu(false); newGame(); });
   againBtn.addEventListener("click", () => { initAudio(); ovMsg.hidden = true; newGame(); });
   document.getElementById("btnMenu").addEventListener("click", () => {
-    ovMsg.hidden = true; ovTitle.hidden = false;
+    ovMsg.hidden = true; setMenu(true);
     state = "title"; ents = []; parts = []; pops = []; goal = null; lvl = 0; L = null; PS = [];
     cards.find((c) => c.dataset.char === hero).focus({ preventScroll: true });
   });
